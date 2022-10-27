@@ -1,29 +1,54 @@
 import { useState, useEffect } from "react";
 
 function App() {
-  const [toDo, setToDo] = useState("");
-  const [toDos, setToDos] = useState([]);
-  const onChange = (event) => setToDo(event.target.value);
-  const onSubmit = (event) => {
-    event.preventDefault();
-    if(toDo === "") {
-      return;
-    }
-    setToDo("");
-    setToDos(currentArray => [toDo, ...currentArray])
+  const [loading, setLoading] = useState(true);
+  const [coins, setCoins] = useState([]);
+  const [coin, setCoin] = useState("");
+  const [dollar, setDollar] = useState(0);
+  useEffect(() => {
+    fetch("https://api.coinpaprika.com/v1/tickers")
+      .then((response) => response.json())
+      .then((json) => {
+        setCoins(json);
+        setCoin(json[0]);
+        setLoading(false);
+      });
+  }, []);
+  function onChange(event) {
+    const selectCoinId = event.target.value;
+    console.log(selectCoinId);
+    const selectCoin = coins.find((coin) => coin.id === selectCoinId);
+    setCoin(selectCoin);
   }
-  console.log(toDos);
-   return (
+  function onChangeInput(event) {
+    setDollar(event.target.value);
+  }
+  return (
     <div>
-      <h1>My To Dos ({toDos.length})</h1>
-     <form onSubmit={onSubmit}>
-     <input onChange={onChange} value={toDo} type="text" placeholder="Wirte your to do..." />
-     <button>Add To Do</button>
-     </form>
-     <hr />
-     <ul>
-     {toDos.map((todo,index) => <li key={index}>{todo}</li>)}
-     </ul>
+      <h1>The Coins! ({coins.length})</h1>
+      {loading ? (
+        <strong>Loading...</strong>
+      ) : (
+        <div>
+          <select onChange={onChange}>
+            {coins.map((coin) => {
+              return (
+                <option key={coin.id} value={coin.id}>
+                  {coin.name} ({coin.symbol}): ${coin.quotes.USD.price} USD
+                </option>
+              );
+            })}
+          </select>
+          <br />
+          <span>USD to {coin.name}</span>
+          <br />
+          <input onChange={onChangeInput} value={dollar} type="number" />
+          <span>USD</span>
+          <br />
+          <input disabled value={dollar / coin.quotes.USD.price} />
+          <span>{coin.symbol}</span>
+        </div>
+      )}
     </div>
   );
 }
